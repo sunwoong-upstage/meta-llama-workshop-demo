@@ -197,9 +197,12 @@ class InquiryCategorySchema(BaseModel):
 
 def classify_inquiry(customer_question: str) -> str:
     """Use local LLM to classify customer inquiry."""
+    
     try:
         # Use Ollama for local LLM (works on M4 Pro and RTX 4070)
         from langchain_community.chat_models import ChatOllama
+        
+        print(f"🤖 Loading ChatOllama model: {os.getenv('LOCAL_LLM_MODEL', 'llama3.2:3b')}")
         
         llm = ChatOllama(
             model=os.getenv("LOCAL_LLM_MODEL", "llama3.2:3b"),  # Default to small model
@@ -219,6 +222,8 @@ Customer Question: "{customer_question}"
 
 Respond with only the category name (Technical, Billing, Account, General, or Urgent). No other text."""
         
+        print(f"🧠 Sending to local LLM...")
+        
         response = llm.invoke(classification_prompt)
         result = response.content.strip()
         
@@ -226,7 +231,8 @@ Respond with only the category name (Technical, Billing, Account, General, or Ur
         valid_categories = ["Technical", "Billing", "Account", "General", "Urgent"]
         for category in valid_categories:
             if category.lower() in result.lower():
-                print(f"🏷️ Local LLM classified as: {category}")
+                print(f"✅ Local LLM classified as: {category}")
+                print(f"{'='*50}")
                 return category
         
         # If no valid category found, fall back to keyword-based
@@ -234,19 +240,24 @@ Respond with only the category name (Technical, Billing, Account, General, or Ur
         raise ValueError("Invalid category returned")
         
     except Exception as e:
-        print(f"Local LLM classification failed: {e}")
+        print(f"🔄 Falling back to keyword-based classification...")
+        
         # Fallback to simple keyword-based classification
         question_lower = customer_question.lower()
         if any(word in question_lower for word in ['api', 'technical', 'bug', 'error', 'system', 'code', 'integration']):
-            return "Technical"
+            fallback_result = "Technical"
         elif any(word in question_lower for word in ['billing', 'payment', 'refund', 'subscription', 'invoice', 'charge']):
-            return "Billing"
+            fallback_result = "Billing"
         elif any(word in question_lower for word in ['password', 'login', 'account', 'profile', 'reset', 'access']):
-            return "Account"
+            fallback_result = "Account"
         elif any(word in question_lower for word in ['urgent', 'critical', 'emergency', 'outage', 'down', 'broken']):
-            return "Urgent"
+            fallback_result = "Urgent"
         else:
-            return "General"
+            fallback_result = "General"
+        
+        print(f"🏷️ Keyword-based classification: {fallback_result}")
+        print(f"{'='*50}")
+        return fallback_result
 
 
 # ============================================================================
@@ -727,8 +738,8 @@ def tools_condition(state: GraphState) -> Literal["tools", "end", "escalate_to_s
         
         print(f"📊 Tool result quality: KB={max_kb_score:.1%}, Web={max_web_score:.1%}")
         
-        has_good_kb = max_kb_score >= 0.25  # 25% threshold for KB
-        has_good_web = max_web_score >= 0.5  # 50% threshold for Web
+        has_good_kb = max_kb_score >= 0.4 # 40% threshold for KB
+        has_good_web = max_web_score >= 0.4  # 40% threshold for Web
         has_any_tools_used = len(kb_results) > 0 or len(web_results) > 0
         has_sufficient_info = has_good_kb or has_good_web
         

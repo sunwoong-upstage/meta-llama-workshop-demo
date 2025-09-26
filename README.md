@@ -1,57 +1,56 @@
-# Meta Llama Workshop Demo - Customer Support Agent
+# 메타 라마 워크숍 데모 - 고객 지원 에이전트
 
-A real-world customer support agent built with LangGraph, featuring local LLM classification, RAG pipeline, and web search capabilities.
+LangGraph와 로컬 LLM 분류를 활용한 실제 고객 지원 에이전트 시스템
 
-## 🎯 **Features**
+## 주요 기능
 
-- **Local LLM Classification**: Uses Ollama for customer inquiry classification
-- **RAG Pipeline**: Vector search through internal knowledge base
-- **Web Search**: Real-time web search using Tavily API
-- **Smart Routing**: Automatic escalation to specialists based on search quality
-- **Interactive Demo**: Command-line interface with interrupts
-- **Web Interface**: FastAPI-based chatbot UI
-- **Jupyter Notebooks**: Complete workshop materials
+- **로컬 LLM 분류**: Ollama를 사용한 고객 문의 분류
+- **RAG 파이프라인**: 내부 지식 베이스 벡터 검색
+- **웹 검색**: Tavily API를 통한 실시간 웹 검색
+- **스마트 라우팅**: 검색 품질 기반 자동 전문가 에스컬레이션
+- **인터랙티브 데모**: 인터럽트 기능이 있는 명령줄 인터페이스
+- **웹 인터페이스**: FastAPI 기반 챗봇 UI
+- **주피터 노트북**: 완전한 워크숍 자료
 
-## 🛠️ **Prerequisites**
+## 사전 요구사항
 
-### 1. **Ollama Setup (Required for Local LLM)**
+### Ollama 설치 (로컬 LLM 필수)
 
-Install Ollama:
 ```bash
 # macOS
 brew install ollama
 
-# Or download from: https://ollama.ai/download
+# 또는 다운로드: https://ollama.ai/download
 ```
 
-Pull the required model:
+필요한 모델 다운로드:
 ```bash
 ollama pull llama3.2:3b
 ```
 
-Start Ollama service:
+Ollama 서비스 시작:
 ```bash
 ollama serve
 ```
 
-### 2. **API Keys**
+### API 키
 
-You'll need API keys for:
-- **Upstage API**: [Get key here](https://console.upstage.ai/)
-- **Tavily API**: [Get key here](https://tavily.com/)
+다음 API 키가 필요합니다:
+- **Upstage API**: [여기서 발급](https://console.upstage.ai/)
+- **Tavily API**: [여기서 발급](https://tavily.com/)
 
-## 🚀 **Quick Start**
+## 빠른 시작
 
-### 1. **Environment Setup**
+### 1. 환경 설정
 
-Follow the setup guide in `환경설정 가이드.md` for detailed instructions.
+자세한 설정 방법은 `환경설정 가이드.md`를 참조하세요.
 
-Quick setup:
+간단 설정:
 ```bash
-# Install uv (Python package manager)
+# uv 설치 (Python 패키지 매니저)
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Clone and setup
+# 클론 및 설정
 git clone git@github.com:sunwoong-upstage/meta-llama-workshop-demo.git
 cd meta-llama-workshop-demo
 uv init
@@ -59,176 +58,134 @@ uv venv --python 3.11
 uv add langgraph langchain-core openai==1.52.2 faiss-cpu numpy tavily-python python-dotenv "httpx<0.28.0" jupyter ipykernel langchain-upstage langchain langgraph-cli[inmem]
 ```
 
-### 2. **Environment Variables**
+### 2. 환경 변수
 
-Create `.env` file:
+`.env` 파일 생성:
 ```env
 UPSTAGE_API_KEY=your_upstage_api_key_here
 TAVILY_API_KEY=your_tavily_api_key_here
 LOCAL_LLM_MODEL=llama3.2:3b
 ```
 
-### 3. **Run the Demo**
+### 3. 실행 방법
 
-**Interactive Command Line:**
+**인터랙티브 명령줄:**
 ```bash
 uv run python graph_build.py
 ```
 
-**Web Interface:**
+**웹 인터페이스:**
 ```bash
 uv run python fastapi_app.py
-# Open http://localhost:8000
+# http://localhost:8000 접속
 ```
 
-**Jupyter Notebook:**
+**주피터 노트북:**
 ```bash
 uv run jupyter notebook
-# Open notebooks/Customer_Support_Agent_Complete.ipynb
+# notebooks/Customer_Support_Agent_Complete.ipynb 열기
 ```
 
-**LangGraph Dev Mode:**
+**LangGraph 개발 모드:**
 ```bash
 uv run langgraph dev
-# Open http://localhost:8123
+# http://localhost:8123 접속
 ```
 
-## 📊 **GPU Monitoring (M4 Mac)**
+## 아키텍처
 
-Monitor GPU usage during local LLM inference:
+### 로컬 LLM 분류
+- **모델**: Ollama를 통한 `llama3.2:3b`
+- **목적**: 고객 문의를 카테고리별로 분류
+- **폴백**: LLM 실패시 키워드 기반 분류
+- **카테고리**: Technical, Billing, Account, General, Urgent
 
-### **Option 1: Activity Monitor**
-```bash
-# Open Activity Monitor → Window → GPU History
-open -a "Activity Monitor"
-```
+### RAG 파이프라인
+- **임베딩**: Upstage 임베딩 모델
+- **벡터 DB**: FAISS (인메모리)
+- **검색**: 의미 유사도 검색
+- **임계값**: 지식 베이스 결과 25% 유사도
 
-### **Option 2: Terminal Commands**
-```bash
-# GPU usage
-sudo powermetrics --samplers gpu_power -n 1 -i 1000
+### 웹 검색
+- **제공자**: Tavily API
+- **쿼리 최적화**: LLM 기반 쿼리 재작성
+- **임계값**: 웹 결과 50% 관련성
 
-# Alternative: System stats
-iostat 1
-```
+### 스마트 라우팅
+- **직접 답변**: 고품질 검색 결과 발견시
+- **에스컬레이션**: 저품질 결과시 전문가 배정
+- **전문가 배정**: LLM 분류 기반
 
-### **Option 3: Install monitoring tools**
-```bash
-# Install htop with GPU support
-brew install htop
-
-# Install GPU monitoring
-brew install nvtop  # For detailed GPU stats
-```
-
-## 🏗️ **Architecture**
-
-### **Local LLM Classification**
-- **Model**: `llama3.2:3b` via Ollama
-- **Purpose**: Classify customer inquiries into categories
-- **Fallback**: Keyword-based classification if LLM fails
-- **Categories**: Technical, Billing, Account, General, Urgent
-
-### **RAG Pipeline**
-- **Embeddings**: Upstage embedding models
-- **Vector DB**: FAISS (in-memory)
-- **Search**: Semantic similarity search
-- **Threshold**: 25% similarity for knowledge base results
-
-### **Web Search**
-- **Provider**: Tavily API
-- **Query Optimization**: LLM-powered query rewriting
-- **Threshold**: 50% relevance for web results
-
-### **Smart Routing**
-- **Direct Answer**: High-quality search results found
-- **Escalation**: Low-quality results → specialist assignment
-- **Specialist Assignment**: Based on LLM classification
-
-## 📁 **Project Structure**
+## 프로젝트 구조
 
 ```
-├── graph_build.py          # Main LangGraph implementation
-├── fastapi_app.py          # Web interface
-├── 환경설정 가이드.md        # Korean setup guide
-├── langgraph.json          # LangGraph configuration
+├── graph_build.py          # 메인 LangGraph 구현
+├── fastapi_app.py          # 웹 인터페이스
+├── 환경설정 가이드.md        # 한국어 설정 가이드
+├── langgraph.json          # LangGraph 설정
 ├── data/
-│   └── customer_data.csv   # Sample customer data
+│   └── customer_data.csv   # 샘플 고객 데이터
 ├── notebooks/
 │   └── Customer_Support_Agent_Complete.ipynb
-└── static/                 # Web UI assets
+└── static/                 # 웹 UI 자원
     ├── index.html
     ├── style.css
     └── script.js
 ```
 
-## 🔧 **Configuration**
+## 설정
 
-### **Model Settings**
+### 모델 설정
 - **LLM**: `solar-pro2` (Upstage)
-- **Local LLM**: `llama3.2:3b` (Ollama)
-- **Temperature**: 0 (deterministic)
-- **Max Tokens**: Dynamic based on task
+- **로컬 LLM**: `llama3.2:3b` (Ollama)
+- **Temperature**: 0 (결정론적)
 
-### **Search Thresholds**
-- **Knowledge Base**: 25% similarity
-- **Web Search**: 50% relevance
-- **Escalation**: Below thresholds
+### 검색 임계값
+- **지식 베이스**: 25% 유사도
+- **웹 검색**: 50% 관련성
+- **에스컬레이션**: 임계값 미만시
 
-### **Specialist Categories**
-- **Technical**: API, system issues
-- **Billing**: Payment, subscriptions
-- **Account**: Login, security
-- **General**: Information requests
-- **Urgent**: Critical issues
+### 전문가 카테고리
+- **Technical**: API, 시스템 이슈
+- **Billing**: 결제, 구독
+- **Account**: 로그인, 보안
+- **General**: 일반 문의
+- **Urgent**: 긴급 이슈
 
-## 🧪 **Testing**
+## 테스트
 
-Try these example questions:
-- "How do I reset my password?"
-- "I'm having API connection issues"
-- "What are your billing policies?"
-- "My system is down - urgent help needed"
+다음 예시 질문들을 시도해보세요:
+- "비밀번호를 재설정하려면 어떻게 해야 하나요?"
+- "API 연결에 문제가 있어요"
+- "결제 정책이 궁금합니다"
+- "시스템이 다운되었어요 - 긴급 도움이 필요합니다"
 
-## 🚨 **Troubleshooting**
+## 문제 해결
 
-### **Ollama Issues**
+### Ollama 이슈
 ```bash
-# Check if Ollama is running
+# Ollama 실행 확인
 ollama list
 
-# Restart Ollama
+# Ollama 재시작
 ollama serve
 
-# Check model
-ollama run llama3.2:3b "Hello"
+# 모델 테스트
+ollama run llama3.2:3b "안녕하세요"
 ```
 
-### **GPU Not Being Used**
-- Ensure Ollama is using GPU: Check Activity Monitor → GPU tab
-- M4 Macs use unified memory - GPU usage shows in "GPU" section
-- Model should load into GPU memory automatically
+### API 이슈
+- `.env` 파일 존재 및 올바른 키 확인
+- API 키 유효성 검증
+- 네트워크 연결 확인
 
-### **API Issues**
-- Check `.env` file exists and has correct keys
-- Verify API key validity
-- Check network connectivity
+## 참고 자료
 
-## 📚 **Learn More**
+- [LangGraph 문서](https://langchain-ai.github.io/langgraph/)
+- [Upstage API 문서](https://developers.upstage.ai/)
+- [Tavily API 문서](https://docs.tavily.com/)
+- [Ollama 문서](https://github.com/ollama/ollama)
 
-- [LangGraph Documentation](https://langchain-ai.github.io/langgraph/)
-- [Upstage API Docs](https://developers.upstage.ai/)
-- [Tavily API Docs](https://docs.tavily.com/)
-- [Ollama Documentation](https://github.com/ollama/ollama)
+## 라이선스
 
-## 🤝 **Contributing**
-
-This is a workshop demo project. Feel free to:
-- Experiment with different models
-- Add new specialist categories
-- Improve the web interface
-- Enhance the knowledge base
-
-## 📄 **License**
-
-Educational use only - Meta Llama Workshop Demo
+교육용 전용 - 메타 라마 워크숍 데모
